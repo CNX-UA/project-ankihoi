@@ -1,0 +1,15 @@
+# Next.js Build Output
+/.next/
+/out/
+/build
+
+# Local Dependencies (Fallback for frontend workspace root)
+/node_modules
+
+# Next.js/Vercel Caches & Configs
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+/coverage

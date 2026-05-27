@@ -1,0 +1,26 @@
+# NestJS Compiled Output
+/dist
+/build
+
+# Local Dependencies (Fallback for backend workspace root)
+/node_modules
+
+# Tests and Coverage
+/coverage
+/.nyc_output
+
+# Temp directories
+.temp
+.tmp
+
+# NestJS / Node Runtime logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+/generated/prisma
+/prisma/*.db
+/prisma/*.sqlite
+/prisma/*.sqlite-journal
