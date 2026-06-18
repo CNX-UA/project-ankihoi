@@ -6,6 +6,12 @@
 # Local Dependencies (Fallback for frontend workspace root)
 /node_modules
 
+# Environment / Secret Files
+.env
+.env.*
+.env.local
+!.env.template
+
 # Next.js/Vercel Caches & Configs
 .vercel
 *.tsbuildinfo
