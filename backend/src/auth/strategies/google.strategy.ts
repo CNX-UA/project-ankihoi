@@ -16,7 +16,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
 
       // URL, на який Google перенаправить користувача після успішного входу
-      callbackURL: 'http://localhost:3001/auth/google/callback',
+      callbackURL: `${process.env.BACKEND_URL || 'http://localhost:3001'}/auth/google/callback`,
 
       // Які дані ми хочемо отримати від Google (email та профіль)
       scope: ['email', 'profile'],

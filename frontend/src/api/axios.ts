@@ -1,14 +1,15 @@
-import axios from 'axios';
+import { useAuthStore } from "@/store/useAuthStore";
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
 });
 
-// Інтерцептор для додавання токена до кожного запиту
+// Interceptor to add token to each request
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -17,23 +18,23 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
-// TODO: Додати інтерцептор для обробки помилок (наприклад, 401 Unauthorized)
+// Interceptor for handling errors (for example, 401 Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        // Що ми маємо зробити, якщо токен прострочений?
-        console.log('Unauthorized, redirecting to login...');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+      if (typeof window !== "undefined") {
+        console.log("Unauthorized, redirecting to login...");
+        localStorage.removeItem("token");
+        useAuthStore.getState().logout();
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

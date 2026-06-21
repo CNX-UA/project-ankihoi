@@ -18,14 +18,17 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService, private prismaService: PrismaService) {}
+  constructor(
+    private jwtService: JwtService,
+    private prismaService: PrismaService,
+  ) {}
 
   async login(user: User) {
-    const payload: JwtPayload = { 
-      email: user.email, 
-      sub: user.id 
+    const payload: JwtPayload = {
+      email: user.email,
+      sub: user.id,
     };
-    
+
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -36,14 +39,17 @@ export class AuthService {
       where: { email: details.email },
     });
     if (!user) {
+      const fullName = [details.firstName, details.lastName]
+        .filter(Boolean)
+        .join(' ');
       user = await this.prismaService.user.create({
         data: {
           email: details.email,
-          name: details.firstName + ' ' + details.lastName,
+          name: fullName,
           providerId: details.providerId,
-          },
+        },
       });
     }
     return user;
-}
+  }
 }
