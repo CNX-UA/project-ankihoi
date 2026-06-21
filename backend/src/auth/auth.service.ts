@@ -1,15 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { User } from '@prisma/client';
+
+export interface OAuthProfile {
+  providerId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  accessToken?: string;
+}
+
+export interface JwtPayload {
+  email: string;
+  sub: string;
+}
 
 @Injectable()
 export class AuthService {
   constructor(private jwtService: JwtService, private prismaService: PrismaService) {}
 
-  async login(user: any) {
-    const payload = { 
+  async login(user: User) {
+    const payload: JwtPayload = { 
       email: user.email, 
-      sub: user.id // sub — це стандартне поле для ID юзера в JWT
+      sub: user.id 
     };
     
     return {
@@ -17,7 +31,7 @@ export class AuthService {
     };
   }
 
-  async validateUser(details: any) {
+  async validateUser(details: OAuthProfile): Promise<User> {
     let user = await this.prismaService.user.findUnique({
       where: { email: details.email },
     });
