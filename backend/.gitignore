@@ -13,6 +13,11 @@
 .temp
 .tmp
 
+# Environment / Secret Files
+.env
+.env.*
+!.env.template
+
 # NestJS / Node Runtime logs
 npm-debug.log*
 pnpm-debug.log*

@@ -15,8 +15,16 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     this.pool = pool;
   }
 
-  async onModuleInit() {
-    await this.$connect();
+    async onModuleInit() {
+    try {
+      await this.$connect();
+      console.log('Connected to database');
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      if (!process.env.DATABASE_URL) {
+        console.error('DATABASE_URL is missing in process.env');
+      }
+    }
   }
 
   async onModuleDestroy() {
