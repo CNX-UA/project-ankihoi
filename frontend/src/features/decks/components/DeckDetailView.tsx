@@ -2,13 +2,13 @@ import React from 'react';
 import { useCards, Card } from '../hooks/useCards';
 import { CardFormModal } from './CardFormModal';
 import { useDeckStore } from '@/store/useDeckStore';
+import { exportToJSON, exportToCSV, exportToHTML } from '../utils/importExport';
 
 export const DeckDetailView: React.FC = () => {
   const { activeDeck: deck, setActiveDeck, openCardModal } = useDeckStore();
+  const { cards, isLoading, deleteCard } = useCards(deck?.id || '');
 
   if (!deck) return null;
-
-  const { cards, isLoading, deleteCard } = useCards(deck.id);
 
   const handleAddCard = () => {
     openCardModal(null);
@@ -22,7 +22,7 @@ export const DeckDetailView: React.FC = () => {
     if (confirm('Ви впевнені, що хочете видалити цю картку?')) {
       try {
         await deleteCard(cardId);
-      } catch (err) {
+      } catch {
         alert('Не вдалося видалити картку');
       }
     }
@@ -82,26 +82,89 @@ export const DeckDetailView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          id="btn-add-card"
-          onClick={handleAddCard}
-          style={{
-            padding: '12px 24px',
-            background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
-            transition: 'opacity 0.2s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-        >
-          + Додати картку
-        </button>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px', background: 'rgba(255, 255, 255, 0.03)', padding: '4px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            <span style={{ fontSize: '12px', color: '#a0aec0', alignSelf: 'center', padding: '0 8px' }}>Експорт:</span>
+            <button
+              id="btn-export-json"
+              onClick={() => exportToJSON(deck.title, deck.description, cards)}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: 'none',
+                color: '#e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 500,
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)')}
+            >
+              JSON
+            </button>
+            <button
+              id="btn-export-csv"
+              onClick={() => exportToCSV(deck.title, cards)}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: 'none',
+                color: '#e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 500,
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)')}
+            >
+              CSV
+            </button>
+            <button
+              id="btn-export-html"
+              onClick={() => exportToHTML(deck.title, deck.description, cards)}
+              style={{
+                padding: '6px 12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: 'none',
+                color: '#e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 500,
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)')}
+            >
+              HTML
+            </button>
+          </div>
+
+          <button
+            id="btn-add-card"
+            onClick={handleAddCard}
+            style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+          >
+            + Додати картку
+          </button>
+        </div>
       </div>
 
       {/* Cards Section */}

@@ -7,18 +7,30 @@ import { useDecks } from '@/features/decks/hooks/useDecks';
 import { DeckCard } from '@/features/decks/components/DeckCard';
 import { CreateDeckModal } from '@/features/decks/components/CreateDeckModal';
 import { DeckDetailView } from '@/features/decks/components/DeckDetailView';
-import { Deck } from '@/features/decks/hooks/useDecks';
 import { useDeckStore } from '@/store/useDeckStore';
+import { useImportMutation } from '@/features/decks/hooks/useImportMutation';
 
 export default function Home() {
   const { user, isLoading: isAuthLoading, logout } = useAuth();
   const { decks, isLoading: isDecksLoading, isError } = useDecks();
   const {
     activeDeck,
-    setActiveDeck,
-    isCreateDeckModalOpen,
     setCreateDeckModalOpen,
   } = useDeckStore();
+
+  const importMutation = useImportMutation();
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.csv,.html';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !user) return;
+      importMutation.mutate({ file, userId: user.id });
+    };
+    input.click();
+  };
 
   const showDecks = !!user && !isAuthLoading;
 
@@ -135,7 +147,7 @@ export default function Home() {
               Ваша платформа для вивчення карток
             </h2>
             <p style={{ fontSize: '18px', color: '#9ca3af', marginBottom: '32px', lineHeight: 1.6 }}>
-              Створюйте власні інтелектуальні колоди карток, тренуйте пам'ять за допомогою методу інтервальних повторень та вивчайте будь-що ефективніше вже сьогодні.
+              Створюйте власні інтелектуальні колоди карток, тренуйте пам{"'"}ять за допомогою методу інтервальних повторень та вивчайте будь-що ефективніше вже сьогодні.
             </p>
             <Link
               id="btn-hero-login"
@@ -173,26 +185,53 @@ export default function Home() {
                 <h2 style={{ fontSize: '28px', fontWeight: 700, margin: 0 }}>Мої колоди</h2>
                 <p style={{ color: '#9ca3af', fontSize: '14px', marginTop: '4px' }}>Управляйте своїми навчальними матеріалами</p>
               </div>
-              <button
-                id="btn-open-create-deck"
-                onClick={() => setCreateDeckModalOpen(true)}
-                style={{
-                  padding: '10px 20px',
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
-                  transition: 'transform 0.1s, opacity 0.2s',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-              >
-                + Створити колоду
-              </button>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  id="btn-import-deck"
+                  onClick={handleImportClick}
+                  disabled={importMutation.isPending}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  }}
+                >
+                  {importMutation.isPending ? 'Імпорт...' : 'Імпортувати колоду'}
+                </button>
+
+                <button
+                  id="btn-open-create-deck"
+                  onClick={() => setCreateDeckModalOpen(true)}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                    transition: 'transform 0.1s, opacity 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+                >
+                  + Створити колоду
+                </button>
+              </div>
             </div>
 
             {isDecksLoading ? (
