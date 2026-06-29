@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class CreateCardDto {
   @IsString()
   @IsNotEmpty()
-  frontText: string;
+  frontText!: string;
 
   @IsString()
   @IsNotEmpty()
-  backText: string;
+  backText!: string;
 }

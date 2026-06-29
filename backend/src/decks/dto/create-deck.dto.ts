@@ -3,13 +3,13 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class CreateDeckDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @IsUUID()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 }
