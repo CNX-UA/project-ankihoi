@@ -1,4 +1,4 @@
-import { IsUUID, IsInt, Min, Max } from 'class-validator';
+import { IsUUID, IsInt, Min, Max, IsOptional } from 'class-validator';
 
 export class CreateReviewDto {
   @IsUUID()
@@ -8,4 +8,8 @@ export class CreateReviewDto {
   @Min(0)
   @Max(5)
   score!: number;
+
+  @IsOptional()
+  @IsInt()
+  timezoneOffset?: number;
 }

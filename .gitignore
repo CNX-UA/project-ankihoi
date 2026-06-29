@@ -40,3 +40,7 @@ desktop.ini
 
 # Gemini Tutor Mode
 gemini-tutor-mode (2).md
+
+#GSD
+.agents/
+.planning/

@@ -10,10 +10,15 @@ interface DeckCardProps {
 
 export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
   const setActiveDeck = useDeckStore((state) => state.setActiveDeck);
+  const setActiveStudyDeck = useDeckStore((state) => state.setActiveStudyDeck);
   const cardCount = deck._count?.cards ?? 0;
 
   return (
-    <Card className="deck-card">
+    <Card 
+      className="deck-card"
+      style={{ cursor: 'pointer' }}
+      onClick={() => setActiveDeck(deck)}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, marginRight: '12px', overflow: 'hidden' }}>
           <h4
@@ -80,20 +85,46 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
           paddingTop: '12px',
         }}
       >
-        <span
-          style={{
-            fontSize: '13px',
-            color: '#cbd5e0',
-            backgroundColor: 'rgba(255, 255, 255, 0.08)',
-            padding: '4px 10px',
-            borderRadius: '12px',
-            fontWeight: 500,
-          }}
-        >
-          {cardCount} {cardCount === 1 ? 'картка' : cardCount > 1 && cardCount < 5 ? 'картки' : 'карток'}
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span
+            style={{
+              fontSize: '13px',
+              color: '#cbd5e0',
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontWeight: 500,
+            }}
+          >
+            {cardCount} {cardCount === 1 ? 'картка' : cardCount > 1 && cardCount < 5 ? 'картки' : 'карток'}
+          </span>
+
+          {deck.dueCardsCount !== undefined && deck.dueCardsCount > 0 && (
+            <span
+              id={`badge-due-deck-${deck.id}`}
+              style={{
+                fontSize: '11px',
+                color: '#63b3ed',
+                backgroundColor: 'rgba(49, 130, 206, 0.15)',
+                border: '1px solid rgba(49, 130, 206, 0.3)',
+                padding: '3px 8px',
+                borderRadius: '10px',
+                fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              {deck.dueCardsCount} до повторення
+            </span>
+          )}
+        </div>
         
         <span
+          id={`btn-study-deck-${deck.id}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveStudyDeck(deck);
+          }}
           style={{
             fontSize: '13px',
             color: '#63b3ed',
@@ -102,6 +133,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
             alignItems: 'center',
             gap: '4px',
             transition: 'color 0.2s',
+            cursor: 'pointer',
           }}
         >
           Вчити &rarr;
