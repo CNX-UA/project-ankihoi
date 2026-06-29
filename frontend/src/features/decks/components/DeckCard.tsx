@@ -1,6 +1,8 @@
 import React from 'react';
 import { Deck } from '../hooks/useDecks';
 import { useDeckStore } from '@/store/useDeckStore';
+import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
 
 interface DeckCardProps {
   deck: Deck;
@@ -11,33 +13,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
   const cardCount = deck._count?.cards ?? 0;
 
   return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '12px',
-        padding: '24px',
-        color: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        height: '100%',
-        minHeight: '160px',
-        boxSizing: 'border-box',
-        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s, box-shadow 0.2s',
-        cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.borderColor = 'rgba(79, 70, 229, 0.4)';
-        e.currentTarget.style.boxShadow = '0 12px 24px -10px rgba(79, 70, 229, 0.3)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
+    <Card className="deck-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, marginRight: '12px', overflow: 'hidden' }}>
           <h4
@@ -70,33 +46,14 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
           </p>
         </div>
 
-        <button
+        <Button
           id={`btn-manage-deck-${deck.id}`}
           onClick={(e) => {
             e.stopPropagation();
             setActiveDeck(deck);
           }}
           title="Редагувати колоду та картки"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#a0aec0',
-            cursor: 'pointer',
-            padding: '6px',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'color 0.2s, background-color 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#ffffff';
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#a0aec0';
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
+          className="btn-icon"
         >
           <svg
             width="18"
@@ -111,7 +68,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
           </svg>
-        </button>
+        </Button>
       </div>
 
       <div
@@ -150,6 +107,6 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck }) => {
           Вчити &rarr;
         </span>
       </div>
-    </div>
+    </Card>
   );
 };
