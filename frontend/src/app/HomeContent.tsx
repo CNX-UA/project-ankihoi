@@ -8,6 +8,8 @@ import { DeckCard } from '@/features/decks/components/DeckCard';
 import { CreateDeckModal } from '@/features/decks/components/CreateDeckModal';
 import { DeckDetailView } from '@/features/decks/components/DeckDetailView';
 import { useDeckStore } from '@/store/useDeckStore';
+import { useWizardStore } from '@/store/useWizardStore';
+import { WizardModal } from '@/features/decks/components/WizardModal';
 import { useImportMutation } from '@/features/decks/hooks/useImportMutation';
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
@@ -19,6 +21,7 @@ export default function HomeContent() {
     activeDeck,
     setCreateDeckModalOpen,
   } = useDeckStore();
+  const { openWizard } = useWizardStore();
 
   const importMutation = useImportMutation();
 
@@ -160,6 +163,20 @@ export default function HomeContent() {
                 </Button>
 
                 <Button
+                  id="btn-open-wizard"
+                  onClick={openWizard}
+                  variant="primary"
+                  style={{
+                    fontWeight: 600,
+                    background: 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                  }}
+                >
+                  ✨ Створити з AI
+                </Button>
+
+                <Button
                   id="btn-open-create-deck"
                   onClick={() => setCreateDeckModalOpen(true)}
                   variant="primary"
@@ -246,6 +263,10 @@ export default function HomeContent() {
             )}
 
             <CreateDeckModal
+              userId={user.id}
+            />
+
+            <WizardModal
               userId={user.id}
             />
           </div>
