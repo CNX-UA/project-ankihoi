@@ -40,12 +40,8 @@ desktop.ini
 
 # Gemini Tutor Mode
 gemini-tutor-mode (2).md
-/GEMINI.md
-
-# Gemini
-.gemini/
-
-# Gemini AI Project
-.planning/
 GEMINI.md
-.planning.bak
+
+#GSD
+.agents/
+.planning/

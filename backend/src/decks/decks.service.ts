@@ -31,18 +31,35 @@ export class DecksService {
         title: createDeckDto.title,
         description: createDeckDto.description,
         userId: createDeckDto.userId,
+        initialEasinessFactor: createDeckDto.initialEasinessFactor,
       },
     });
   }
 
-  findAll() {
-    return this.prisma.deck.findMany({
+  async findAll() {
+    const now = new Date();
+    const decks = await this.prisma.deck.findMany({
       include: {
         _count: {
           select: { cards: true },
         },
+        cards: {
+          where: {
+            nextReview: {
+              lte: now,
+            },
+          },
+          select: {
+            id: true,
+          },
+        },
       },
     });
+
+    return decks.map((deck) => ({
+      ...deck,
+      dueCardsCount: deck.cards.length,
+    }));
   }
 
   async findOne(id: string) {
@@ -67,6 +84,7 @@ export class DecksService {
         title: updateDeckDto.title,
         description: updateDeckDto.description,
         userId: updateDeckDto.userId,
+        initialEasinessFactor: updateDeckDto.initialEasinessFactor,
       },
     });
   }
@@ -81,14 +99,14 @@ export class DecksService {
 
   // Cards Nested Actions
   async createCard(deckId: string, createCardDto: CreateCardDto) {
-    await this.findOne(deckId);
+    const deck = await this.findOne(deckId);
 
     return this.prisma.card.create({
       data: {
         frontText: createCardDto.frontText,
         backText: createCardDto.backText,
         deckId,
-        easinessFactor: 2.5,
+        easinessFactor: deck.initialEasinessFactor ?? 2.5,
         repetitions: 0,
         intervalDays: 0,
         nextReview: new Date(),

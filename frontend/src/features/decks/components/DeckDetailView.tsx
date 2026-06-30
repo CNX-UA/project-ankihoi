@@ -1,14 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCards, Card as CardType } from "../hooks/useCards";
 import { CardFormModal } from "./CardFormModal";
 import { useDeckStore } from "@/store/useDeckStore";
 import { exportToJSON, exportToCSV, exportToHTML } from "../utils/importExport";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { useDecks } from "../hooks/useDecks";
+import { EditDeckModal } from "./EditDeckModal";
 
 export const DeckDetailView: React.FC = () => {
-  const { activeDeck: deck, setActiveDeck, openCardModal } = useDeckStore();
+  const { activeDeck: deck, setActiveDeck, openCardModal, setActiveStudyDeck } = useDeckStore();
   const { cards, isLoading, deleteCard } = useCards(deck?.id || "");
+  const { deleteDeck } = useDecks();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!deck) return null;
 
@@ -26,6 +30,18 @@ export const DeckDetailView: React.FC = () => {
         await deleteCard(cardId);
       } catch {
         alert("Не вдалося видалити картку");
+      }
+    }
+  };
+
+  const handleDeleteDeck = async () => {
+    const message = `Ви впевнені, що хочете видалити колоду "${deck.title}" та всі її картки? Цю дію неможливо скасувати!`;
+    if (confirm(message)) {
+      try {
+        await deleteDeck(deck.id);
+        setActiveDeck(null);
+      } catch {
+        alert("Не вдалося видалити колоду");
       }
     }
   };
@@ -139,6 +155,33 @@ export const DeckDetailView: React.FC = () => {
               HTML
             </Button>
           </div>
+
+          <Button
+            id="btn-study-deck-details"
+            onClick={() => setActiveStudyDeck(deck)}
+            variant="outline"
+            style={{ padding: "12px 24px", fontSize: "15px", fontWeight: 600 }}
+          >
+            Вчити колоду
+          </Button>
+
+          <Button
+            id="btn-edit-deck-details"
+            onClick={() => setIsEditModalOpen(true)}
+            variant="outline"
+            style={{ padding: "12px 24px", fontSize: "15px", fontWeight: 600 }}
+          >
+            Редагувати колоду
+          </Button>
+
+          <Button
+            id="btn-delete-deck-details"
+            onClick={handleDeleteDeck}
+            variant="danger"
+            style={{ padding: "12px 24px", fontSize: "15px", fontWeight: 600 }}
+          >
+            Видалити колоду
+          </Button>
 
           <Button
             id="btn-add-card"
@@ -270,6 +313,14 @@ export const DeckDetailView: React.FC = () => {
       )}
 
       <CardFormModal deckId={deck.id} />
+      <EditDeckModal
+        deck={deck}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={(updatedDeck) => {
+          setActiveDeck(updatedDeck);
+        }}
+      />
     </div>
   );
 };

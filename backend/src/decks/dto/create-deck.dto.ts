@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateDeckDto {
   @IsString()
@@ -12,4 +12,9 @@ export class CreateDeckDto {
   @IsUUID()
   @IsNotEmpty()
   userId!: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1.3)
+  initialEasinessFactor?: number;
 }

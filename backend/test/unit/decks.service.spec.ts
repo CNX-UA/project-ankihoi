@@ -79,6 +79,33 @@ describe('DecksService', () => {
     });
   });
 
+  describe('findAll', () => {
+    it('should return all decks with dueCardsCount mapped correctly', async () => {
+      prisma.deck.findMany.mockResolvedValue([
+        {
+          id: 'deck-1',
+          title: 'Deck 1',
+          cards: [{ id: 'card-1' }, { id: 'card-2' }],
+          _count: { cards: 5 }
+        }
+      ]);
+
+      const result = await service.findAll();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].dueCardsCount).toBe(2);
+      expect(prisma.deck.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        include: expect.objectContaining({
+          cards: expect.objectContaining({
+            where: expect.objectContaining({
+              nextReview: expect.any(Object)
+            })
+          })
+        })
+      }));
+    });
+  });
+
   describe('findOne', () => {
     it('should return deck details if exists', async () => {
       prisma.deck.findUnique.mockResolvedValue({
@@ -99,20 +126,63 @@ describe('DecksService', () => {
   });
 
   describe('createCard', () => {
-    it('should successfully create a card if deck exists', async () => {
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid' });
-      prisma.card.create.mockResolvedValue({
-        id: 'card-uuid',
-        frontText: 'Front',
-        backText: 'Back',
-        deckId: 'deck-uuid',
-      });
+    it('should successfully create a card with default easinessFactor of 2.5 if deck initialEasinessFactor is not set', async () => {
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', initialEasinessFactor: null });
+      prisma.card.create.mockImplementation(({ data }) => Promise.resolve({ id: 'card-uuid', ...data }));
 
-      const result = await service.createCard('deck-uuid', {
-        frontText: 'Front',
-        backText: 'Back',
-      });
-      expect(result.id).toBe('card-uuid');
+      const result = await service.createCard('deck-uuid', { frontText: 'Front', backText: 'Back' });
+      expect(result.easinessFactor).toBe(2.5);
+      expect(prisma.card.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          easinessFactor: 2.5,
+        }),
+      }));
+    });
+
+    it('should successfully create a card with deck initialEasinessFactor if defined', async () => {
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', initialEasinessFactor: 1.8 });
+      prisma.card.create.mockImplementation(({ data }) => Promise.resolve({ id: 'card-uuid', ...data }));
+
+      const result = await service.createCard('deck-uuid', { frontText: 'Front', backText: 'Back' });
+      expect(result.easinessFactor).toBe(1.8);
+      expect(prisma.card.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          easinessFactor: 1.8,
+        }),
+      }));
+    });
+  });
+
+  describe('update', () => {
+    it('should update and return the deck if exists', async () => {
+      const updateDto = { title: 'Updated Deck', description: 'Updated Desc' };
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'Old Title' });
+      prisma.deck.update.mockResolvedValue({ id: 'deck-uuid', ...updateDto });
+
+      const result = await service.update('deck-uuid', updateDto);
+      expect(result.title).toBe('Updated Deck');
+      expect(prisma.deck.update).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException on update if deck does not exist', async () => {
+      prisma.deck.findUnique.mockResolvedValue(null);
+      await expect(service.update('invalid-deck', { title: 'New' })).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete and return the deck if exists', async () => {
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'To Delete' });
+      prisma.deck.delete.mockResolvedValue({ id: 'deck-uuid' });
+
+      const result = await service.remove('deck-uuid');
+      expect(result.id).toBe('deck-uuid');
+      expect(prisma.deck.delete).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException on remove if deck does not exist', async () => {
+      prisma.deck.findUnique.mockResolvedValue(null);
+      await expect(service.remove('invalid-deck')).rejects.toThrow(NotFoundException);
     });
   });
 

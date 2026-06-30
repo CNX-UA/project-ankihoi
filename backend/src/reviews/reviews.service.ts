@@ -35,10 +35,12 @@ export class ReviewsService {
       );
 
       // Calculate the next review date
-      const nextReview = new Date();
-      nextReview.setDate(nextReview.getDate() + intervalDays);
-      // Zero out hours, minutes, seconds for clean dates if needed, or leave precise
-      nextReview.setHours(0, 0, 0, 0);
+      const offsetMinutes = dto.timezoneOffset ?? 0;
+      const now = new Date();
+      const localTime = new Date(now.getTime() - offsetMinutes * 60 * 1000);
+      localTime.setUTCDate(localTime.getUTCDate() + intervalDays);
+      localTime.setUTCHours(0, 0, 0, 0);
+      const nextReview = new Date(localTime.getTime() + offsetMinutes * 60 * 1000);
 
       // Update Card
       const updatedCard = await tx.card.update({
