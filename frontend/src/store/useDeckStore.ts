@@ -16,6 +16,10 @@ interface DeckUIState {
   selectedCard: Card | null;
   openCardModal: (card?: Card | null) => void;
   closeCardModal: () => void;
+
+  // Active Study Deck View
+  activeStudyDeck: Deck | null;
+  setActiveStudyDeck: (deck: Deck | null) => void;
 }
 
 export const useDeckStore = create<DeckUIState>((set) => ({
@@ -29,4 +33,7 @@ export const useDeckStore = create<DeckUIState>((set) => ({
   selectedCard: null,
   openCardModal: (card = null) => set({ isCardModalOpen: true, selectedCard: card }),
   closeCardModal: () => set({ isCardModalOpen: false, selectedCard: null }),
+
+  activeStudyDeck: null,
+  setActiveStudyDeck: (deck) => set({ activeStudyDeck: deck }),
 }));

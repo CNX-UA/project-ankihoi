@@ -22,12 +22,13 @@ model User {
 }
 
 model Deck {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cards       Card[]
+  id                    String   @id @default(uuid())
+  title                 String
+  description           String
+  userId                String   @map("user_id")
+  initialEasinessFactor Float?   @map("initial_easiness_factor")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards                 Card[]
 
   @@map("decks")
 }

@@ -11,6 +11,7 @@ import { useDeckStore } from '@/store/useDeckStore';
 import { useImportMutation } from '@/features/decks/hooks/useImportMutation';
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
+import { StudyContainer } from '@/features/reviews/components/StudyContainer';
 
 export default function HomeContent() {
   const { user, isLoading: isAuthLoading, logout } = useAuth();
@@ -18,6 +19,8 @@ export default function HomeContent() {
   const {
     activeDeck,
     setCreateDeckModalOpen,
+    activeStudyDeck,
+    setActiveStudyDeck,
   } = useDeckStore();
 
   const importMutation = useImportMutation();
@@ -139,6 +142,12 @@ export default function HomeContent() {
               Створити першу колоду
             </Link>
           </div>
+        ) : activeStudyDeck ? (
+          <StudyContainer
+            deckId={activeStudyDeck.id}
+            deckName={activeStudyDeck.title}
+            onBackToDecks={() => setActiveStudyDeck(null)}
+          />
         ) : activeDeck ? (
           <DeckDetailView />
         ) : (
