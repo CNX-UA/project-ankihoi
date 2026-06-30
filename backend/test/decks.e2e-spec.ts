@@ -15,7 +15,9 @@ describe('Decks & Cards (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
 
     prisma = app.get(PrismaService);
@@ -158,14 +160,10 @@ describe('Decks & Cards (e2e)', () => {
     });
 
     it('DELETE /decks/:id - should delete deck', async () => {
-      await request(app.getHttpServer())
-        .delete(`/decks/${deckId}`)
-        .expect(200);
+      await request(app.getHttpServer()).delete(`/decks/${deckId}`).expect(200);
 
       // Verify deleted
-      await request(app.getHttpServer())
-        .get(`/decks/${deckId}`)
-        .expect(404);
+      await request(app.getHttpServer()).get(`/decks/${deckId}`).expect(404);
     });
   });
 });

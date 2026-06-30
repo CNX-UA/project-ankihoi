@@ -141,8 +141,9 @@ describe('ReviewsService', () => {
     it('should throw NotFoundException if card does not exist', async () => {
       mockPrismaService.card.findUnique.mockResolvedValue(null);
 
-      await expect(service.reviewCard({ cardId: 'non-existent', score: 4 }))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.reviewCard({ cardId: 'non-existent', score: 4 }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

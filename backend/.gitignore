@@ -25,6 +25,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Prisma
+/prisma/
+/src/prisma/client/
 /generated/prisma
 /prisma/*.db
 /prisma/*.sqlite

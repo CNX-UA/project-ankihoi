@@ -8,7 +8,9 @@ export class ReviewsController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async create(@Body() createReviewDto: CreateReviewDto): Promise<ReviewResponse> {
+  async create(
+    @Body() createReviewDto: CreateReviewDto,
+  ): Promise<ReviewResponse> {
     return this.reviewsService.reviewCard(createReviewDto);
   }
 }
