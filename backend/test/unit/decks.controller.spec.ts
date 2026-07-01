@@ -39,7 +39,11 @@ describe('DecksController', () => {
 
   describe('Decks CRUD endpoints', () => {
     it('should delegate create request to service', async () => {
-      const dto: CreateDeckDto = { title: 'D1', description: 'Desc', userId: 'user-uuid' };
+      const dto: CreateDeckDto = {
+        title: 'D1',
+        description: 'Desc',
+        userId: 'user-uuid',
+      };
       service.create.mockResolvedValue({ id: 'deck-uuid', ...dto });
       const res = await controller.create(dto);
       expect(res.id).toBe('deck-uuid');

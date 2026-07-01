@@ -1,9 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { DecksService } from './decks.service';
 import { CreateDeckDto } from './dto/create-deck.dto';
 import { UpdateDeckDto } from './dto/update-deck.dto';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
+import { BatchCreateCardsDto } from './dto/batch-create-cards.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { User } from '@prisma/client';
 
 @Controller('decks')
 export class DecksController {
@@ -49,10 +62,7 @@ export class DecksController {
   }
 
   @Get(':deckId/cards/:cardId')
-  findCard(
-    @Param('deckId') deckId: string,
-    @Param('cardId') cardId: string,
-  ) {
+  findCard(@Param('deckId') deckId: string, @Param('cardId') cardId: string) {
     return this.decksService.findCard(deckId, cardId);
   }
 
@@ -66,10 +76,21 @@ export class DecksController {
   }
 
   @Delete(':deckId/cards/:cardId')
-  removeCard(
-    @Param('deckId') deckId: string,
-    @Param('cardId') cardId: string,
-  ) {
+  removeCard(@Param('deckId') deckId: string, @Param('cardId') cardId: string) {
     return this.decksService.removeCard(deckId, cardId);
+  }
+
+  @Post(':deckId/cards/batch')
+  @UseGuards(AuthGuard('jwt'))
+  createCardsBatch(
+    @Param('deckId') deckId: string,
+    @Body() batchCreateCardsDto: BatchCreateCardsDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.decksService.createCardsBatch(
+      user.id,
+      deckId,
+      batchCreateCardsDto,
+    );
   }
 }

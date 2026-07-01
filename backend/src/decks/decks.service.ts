@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateDeckDto } from './dto/create-deck.dto';
 import { UpdateDeckDto } from './dto/update-deck.dto';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { BatchCreateCardsDto } from './dto/batch-create-cards.dto';
+import { CardDifficulty } from '../ai/dto/generate-cards.dto';
 
 @Injectable()
 export class DecksService {
@@ -14,7 +21,9 @@ export class DecksService {
       where: { id: createDeckDto.userId },
     });
     if (!user) {
-      throw new NotFoundException(`User with ID ${createDeckDto.userId} not found`);
+      throw new NotFoundException(
+        `User with ID ${createDeckDto.userId} not found`,
+      );
     }
 
     return this.prisma.deck.create({
@@ -120,12 +129,18 @@ export class DecksService {
       where: { id: cardId, deckId },
     });
     if (!card) {
-      throw new NotFoundException(`Card with ID ${cardId} not found in Deck ${deckId}`);
+      throw new NotFoundException(
+        `Card with ID ${cardId} not found in Deck ${deckId}`,
+      );
     }
     return card;
   }
 
-  async updateCard(deckId: string, cardId: string, updateCardDto: UpdateCardDto) {
+  async updateCard(
+    deckId: string,
+    cardId: string,
+    updateCardDto: UpdateCardDto,
+  ) {
     await this.findCard(deckId, cardId);
 
     return this.prisma.card.update({
@@ -136,7 +151,9 @@ export class DecksService {
         easinessFactor: updateCardDto.easinessFactor,
         repetitions: updateCardDto.repetitions,
         intervalDays: updateCardDto.intervalDays,
-        nextReview: updateCardDto.nextReview ? new Date(updateCardDto.nextReview) : undefined,
+        nextReview: updateCardDto.nextReview
+          ? new Date(updateCardDto.nextReview)
+          : undefined,
       },
     });
   }
@@ -146,6 +163,72 @@ export class DecksService {
 
     return this.prisma.card.delete({
       where: { id: cardId },
+    });
+  }
+
+  async createCardsBatch(
+    userId: string,
+    deckId: string,
+    dto: BatchCreateCardsDto,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      let targetDeckId = deckId;
+
+      if (deckId === 'new') {
+        if (!dto.newDeckTitle) {
+          throw new BadRequestException('Title is required for a new deck');
+        }
+        const newDeck = await tx.deck.create({
+          data: {
+            title: dto.newDeckTitle,
+            description: dto.newDeckDescription || '',
+            userId,
+          },
+        });
+        targetDeckId = newDeck.id;
+      } else {
+        const deck = await tx.deck.findUnique({
+          where: { id: deckId },
+        });
+        if (!deck) {
+          throw new NotFoundException(`Deck with ID ${deckId} not found`);
+        }
+        if (deck.userId !== userId) {
+          throw new ForbiddenException(
+            `Deck with ID ${deckId} is not owned by user ${userId}`,
+          );
+        }
+      }
+
+      if (dto.cards && dto.cards.length > 0) {
+        const difficulty = dto.difficulty || CardDifficulty.MEDIUM;
+        const difficultyEFMap: Record<CardDifficulty, number> = {
+          [CardDifficulty.LIGHT]: 2.7,
+          [CardDifficulty.MEDIUM]: 2.5,
+          [CardDifficulty.HARD]: 2.2,
+          [CardDifficulty.ULTRA]: 1.8,
+        };
+        const easinessFactor = difficultyEFMap[difficulty] ?? 2.5;
+
+        const cardsData = dto.cards.map((card) => ({
+          frontText: card.question,
+          backText: card.answer,
+          deckId: targetDeckId,
+          easinessFactor,
+          repetitions: 0,
+          intervalDays: 1, // Interval = 1 day
+          nextReview: new Date(),
+        }));
+
+        await tx.card.createMany({
+          data: cardsData,
+        });
+      }
+
+      return tx.deck.findUnique({
+        where: { id: targetDeckId },
+        include: { cards: true },
+      });
     });
   }
 }
