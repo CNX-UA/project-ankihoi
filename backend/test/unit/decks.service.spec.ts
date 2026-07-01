@@ -85,16 +85,18 @@ describe('DecksService', () => {
         {
           id: 'deck-1',
           title: 'Deck 1',
+          userId: 'user-uuid',
           cards: [{ id: 'card-1' }, { id: 'card-2' }],
           _count: { cards: 5 }
         }
       ]);
 
-      const result = await service.findAll();
+      const result = await service.findAll('user-uuid');
       expect(result).toBeDefined();
       expect(result.length).toBe(1);
       expect(result[0].dueCardsCount).toBe(2);
       expect(prisma.deck.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { userId: 'user-uuid' },
         include: expect.objectContaining({
           cards: expect.objectContaining({
             where: expect.objectContaining({
@@ -107,19 +109,32 @@ describe('DecksService', () => {
   });
 
   describe('findOne', () => {
-    it('should return deck details if exists', async () => {
+    it('should return deck details if exists and user owns it', async () => {
       prisma.deck.findUnique.mockResolvedValue({
         id: 'deck-uuid',
         title: 'Deck 1',
+        userId: 'user-uuid',
         cards: [],
       });
-      const result = await service.findOne('deck-uuid');
+      const result = await service.findOne('deck-uuid', 'user-uuid');
       expect(result.id).toBe('deck-uuid');
+    });
+
+    it('should throw ForbiddenException if user does not own the deck', async () => {
+      prisma.deck.findUnique.mockResolvedValue({
+        id: 'deck-uuid',
+        title: 'Deck 1',
+        userId: 'other-user-uuid',
+        cards: [],
+      });
+      await expect(service.findOne('deck-uuid', 'user-uuid')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw NotFoundException if deck does not exist', async () => {
       prisma.deck.findUnique.mockResolvedValue(null);
-      await expect(service.findOne('invalid-deck')).rejects.toThrow(
+      await expect(service.findOne('invalid-deck', 'user-uuid')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -127,10 +142,10 @@ describe('DecksService', () => {
 
   describe('createCard', () => {
     it('should successfully create a card with default easinessFactor of 2.5 if deck initialEasinessFactor is not set', async () => {
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', initialEasinessFactor: null });
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', userId: 'user-uuid', initialEasinessFactor: null });
       prisma.card.create.mockImplementation(({ data }) => Promise.resolve({ id: 'card-uuid', ...data }));
 
-      const result = await service.createCard('deck-uuid', { frontText: 'Front', backText: 'Back' });
+      const result = await service.createCard('user-uuid', 'deck-uuid', { frontText: 'Front', backText: 'Back' });
       expect(result.easinessFactor).toBe(2.5);
       expect(prisma.card.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
@@ -140,10 +155,10 @@ describe('DecksService', () => {
     });
 
     it('should successfully create a card with deck initialEasinessFactor if defined', async () => {
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', initialEasinessFactor: 1.8 });
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', userId: 'user-uuid', initialEasinessFactor: 1.8 });
       prisma.card.create.mockImplementation(({ data }) => Promise.resolve({ id: 'card-uuid', ...data }));
 
-      const result = await service.createCard('deck-uuid', { frontText: 'Front', backText: 'Back' });
+      const result = await service.createCard('user-uuid', 'deck-uuid', { frontText: 'Front', backText: 'Back' });
       expect(result.easinessFactor).toBe(1.8);
       expect(prisma.card.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
@@ -154,44 +169,44 @@ describe('DecksService', () => {
   });
 
   describe('update', () => {
-    it('should update and return the deck if exists', async () => {
+    it('should update and return the deck if exists and is owned by user', async () => {
       const updateDto = { title: 'Updated Deck', description: 'Updated Desc' };
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'Old Title' });
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'Old Title', userId: 'user-uuid' });
       prisma.deck.update.mockResolvedValue({ id: 'deck-uuid', ...updateDto });
 
-      const result = await service.update('deck-uuid', updateDto);
+      const result = await service.update('deck-uuid', 'user-uuid', updateDto);
       expect(result.title).toBe('Updated Deck');
       expect(prisma.deck.update).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException on update if deck does not exist', async () => {
       prisma.deck.findUnique.mockResolvedValue(null);
-      await expect(service.update('invalid-deck', { title: 'New' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('invalid-deck', 'user-uuid', { title: 'New' })).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('remove', () => {
-    it('should delete and return the deck if exists', async () => {
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'To Delete' });
+    it('should delete and return the deck if exists and is owned by user', async () => {
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', title: 'To Delete', userId: 'user-uuid' });
       prisma.deck.delete.mockResolvedValue({ id: 'deck-uuid' });
 
-      const result = await service.remove('deck-uuid');
+      const result = await service.remove('deck-uuid', 'user-uuid');
       expect(result.id).toBe('deck-uuid');
       expect(prisma.deck.delete).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException on remove if deck does not exist', async () => {
       prisma.deck.findUnique.mockResolvedValue(null);
-      await expect(service.remove('invalid-deck')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('invalid-deck', 'user-uuid')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findCard', () => {
     it('should throw NotFoundException if card does not belong to the deck', async () => {
-      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid' });
+      prisma.deck.findUnique.mockResolvedValue({ id: 'deck-uuid', userId: 'user-uuid' });
       prisma.card.findFirst.mockResolvedValue(null);
 
-      await expect(service.findCard('deck-uuid', 'card-uuid')).rejects.toThrow(
+      await expect(service.findCard('user-uuid', 'deck-uuid', 'card-uuid')).rejects.toThrow(
         NotFoundException,
       );
     });

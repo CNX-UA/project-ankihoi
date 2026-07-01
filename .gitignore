@@ -45,3 +45,6 @@ GEMINI.md
 #GSD
 .agents/
 .planning/
+.planning.bak/
+.gemini/
+.gemini.bak/

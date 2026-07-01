@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { Card, ReviewHistory } from '@prisma/client';
@@ -16,14 +16,23 @@ export class ReviewsService {
    * Reviews a card, calculates new spaced repetition metrics using the SM-2 algorithm,
    * and saves the updated card state and history record in a single transaction.
    */
-  async reviewCard(dto: CreateReviewDto): Promise<ReviewResponse> {
+  async reviewCard(userId: string, dto: CreateReviewDto): Promise<ReviewResponse> {
     return this.prisma.$transaction(async (tx) => {
       const card = await tx.card.findUnique({
         where: { id: dto.cardId },
+        include: {
+          deck: true,
+        },
       });
 
       if (!card) {
         throw new NotFoundException(`Card with ID ${dto.cardId} not found`);
+      }
+
+      if (card.deck.userId !== userId) {
+        throw new ForbiddenException(
+          `Card with ID ${dto.cardId} does not belong to a deck owned by user ${userId}`,
+        );
       }
 
       // Calculate SM-2 updates

@@ -134,13 +134,17 @@ export class AiService {
     const hasNotes = notes && notes.trim();
 
     if (!hasNotes && (!deckTitle || !deckTitle.trim())) {
-      throw new BadRequestException('Notes content or deck title cannot be empty');
+      throw new BadRequestException(
+        'Notes content or deck title cannot be empty',
+      );
     }
 
     try {
       const config = STYLE_CONFIGS[CardStyle.Q_A];
-      const difficultyText = DIFFICULTY_INSTRUCTIONS[difficulty] || DIFFICULTY_INSTRUCTIONS[CardDifficulty.MEDIUM];
-      
+      const difficultyText =
+        DIFFICULTY_INSTRUCTIONS[difficulty] ||
+        DIFFICULTY_INSTRUCTIONS[CardDifficulty.MEDIUM];
+
       let contents = '';
       let systemInstruction = config.systemInstruction + ' ' + difficultyText;
 
@@ -166,7 +170,9 @@ export class AiService {
       }
 
       const cards = JSON.parse(response.text) as CardProposal[];
-      return this.auditAndReformulateCards(cards, CardStyle.Q_A) as Promise<CardProposal[]>;
+      return this.auditAndReformulateCards(cards, CardStyle.Q_A) as Promise<
+        CardProposal[]
+      >;
     } catch (error) {
       this.logger.error(
         `Gemini card generation error: ${error instanceof Error ? error.message : String(error)}`,
@@ -204,8 +210,15 @@ export class AiService {
         },
       };
 
-      const difficultyText = DIFFICULTY_INSTRUCTIONS[difficulty] || DIFFICULTY_INSTRUCTIONS[CardDifficulty.MEDIUM];
-      const systemInstruction = config.systemInstruction + ' ' + difficultyText + ' ' + STRICT_BOUNDARY_INSTRUCTION;
+      const difficultyText =
+        DIFFICULTY_INSTRUCTIONS[difficulty] ||
+        DIFFICULTY_INSTRUCTIONS[CardDifficulty.MEDIUM];
+      const systemInstruction =
+        config.systemInstruction +
+        ' ' +
+        difficultyText +
+        ' ' +
+        STRICT_BOUNDARY_INSTRUCTION;
 
       const response = await this.ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -260,7 +273,9 @@ export class AiService {
       });
 
       if (!response.text) {
-        this.logger.warn('Critic returned empty response, falling back to original cards');
+        this.logger.warn(
+          'Critic returned empty response, falling back to original cards',
+        );
         return cards;
       }
 

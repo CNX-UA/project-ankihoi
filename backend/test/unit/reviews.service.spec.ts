@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewsService } from '../../src/reviews/reviews.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
-  let prisma: any;
+  let prisma: PrismaService;
 
   const mockPrismaService: any = {
     card: {
@@ -43,12 +43,16 @@ describe('ReviewsService', () => {
         repetitions: 0,
         intervalDays: 0,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
 
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 4 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 4 });
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(result.card.repetitions).toBe(1);
@@ -63,12 +67,16 @@ describe('ReviewsService', () => {
         repetitions: 1,
         intervalDays: 1,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
 
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 5 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 5 });
 
       expect(result.card.repetitions).toBe(2);
       expect(result.card.intervalDays).toBe(6);
@@ -82,12 +90,16 @@ describe('ReviewsService', () => {
         repetitions: 2,
         intervalDays: 6,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
 
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 5 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 5 });
 
       expect(result.card.repetitions).toBe(3);
       expect(result.card.intervalDays).toBe(16);
@@ -101,12 +113,16 @@ describe('ReviewsService', () => {
         repetitions: 3,
         intervalDays: 16,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
 
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 2 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 2 });
 
       expect(result.card.repetitions).toBe(0);
       expect(result.card.intervalDays).toBe(1);
@@ -130,11 +146,15 @@ describe('ReviewsService', () => {
         repetitions: 0,
         intervalDays: 0,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 4, timezoneOffset: -540 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 4, timezoneOffset: -540 });
 
       // Tokyo time at 'now': 2026-06-29 12:00 UTC + 9h = 2026-06-29 21:00.
       // Next review interval = 1 day.
@@ -150,11 +170,15 @@ describe('ReviewsService', () => {
         repetitions: 0,
         intervalDays: 0,
         nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'user-1',
+        },
       };
       mockPrismaService.card.findUnique.mockResolvedValue(card);
       mockPrismaService.card.update.mockImplementation(({ data }) => Promise.resolve({ ...card, ...data }));
 
-      const result = await service.reviewCard({ cardId: 'card-1', score: 4, timezoneOffset: 300 });
+      const result = await service.reviewCard('user-1', { cardId: 'card-1', score: 4, timezoneOffset: 300 });
 
       // NY time at 'now': 2026-06-29 12:00 UTC - 5h = 2026-06-29 07:00.
       // Next review interval = 1 day.
@@ -169,8 +193,27 @@ describe('ReviewsService', () => {
       mockPrismaService.card.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.reviewCard({ cardId: 'non-existent', score: 4 }),
+        service.reviewCard('user-1', { cardId: 'non-existent', score: 4 }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if card exists but belongs to another user', async () => {
+      const card = {
+        id: 'card-1',
+        easinessFactor: 2.5,
+        repetitions: 0,
+        intervalDays: 0,
+        nextReview: new Date(),
+        deck: {
+          id: 'deck-1',
+          userId: 'other-user',
+        },
+      };
+      mockPrismaService.card.findUnique.mockResolvedValue(card);
+
+      await expect(
+        service.reviewCard('user-1', { cardId: 'card-1', score: 4 }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

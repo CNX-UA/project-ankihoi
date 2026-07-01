@@ -32,6 +32,7 @@ export const useDecks = () => {
       const response = await api.get('/decks');
       return response.data;
     },
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'),
   });
 
   const createDeckMutation = useMutation({

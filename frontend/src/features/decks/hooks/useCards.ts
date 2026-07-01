@@ -37,7 +37,7 @@ export const useCards = (deckId: string) => {
       const response = await api.get(`/decks/${deckId}/cards`);
       return response.data;
     },
-    enabled: !!deckId,
+    enabled: !!deckId && typeof window !== 'undefined' && !!localStorage.getItem('token'),
   });
 
   const createCardMutation = useMutation({

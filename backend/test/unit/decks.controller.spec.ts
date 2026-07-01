@@ -44,27 +44,30 @@ describe('DecksController', () => {
         description: 'Desc',
         userId: 'user-uuid',
       };
+      const mockUser = { id: 'user-uuid' } as any;
       service.create.mockResolvedValue({ id: 'deck-uuid', ...dto });
-      const res = await controller.create(dto);
+      const res = await controller.create(dto, mockUser);
       expect(res.id).toBe('deck-uuid');
       expect(service.create).toHaveBeenCalledWith(dto);
     });
 
     it('should delegate findOne to service as string ID', async () => {
+      const mockUser = { id: 'user-uuid' } as any;
       service.findOne.mockResolvedValue({ id: 'deck-uuid' });
-      const res = await controller.findOne('deck-uuid');
+      const res = await controller.findOne('deck-uuid', mockUser);
       expect(res.id).toBe('deck-uuid');
-      expect(service.findOne).toHaveBeenCalledWith('deck-uuid');
+      expect(service.findOne).toHaveBeenCalledWith('deck-uuid', 'user-uuid');
     });
   });
 
   describe('Cards nested endpoints', () => {
     it('should delegate createCard request to service', async () => {
       const cardDto: CreateCardDto = { frontText: 'Q', backText: 'A' };
+      const mockUser = { id: 'user-uuid' } as any;
       service.createCard.mockResolvedValue({ id: 'card-uuid', ...cardDto });
-      const res = await controller.createCard('deck-uuid', cardDto);
+      const res = await controller.createCard('deck-uuid', cardDto, mockUser);
       expect(res.id).toBe('card-uuid');
-      expect(service.createCard).toHaveBeenCalledWith('deck-uuid', cardDto);
+      expect(service.createCard).toHaveBeenCalledWith('user-uuid', 'deck-uuid', cardDto);
     });
   });
 });

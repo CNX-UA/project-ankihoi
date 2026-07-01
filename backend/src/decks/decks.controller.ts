@@ -18,33 +18,39 @@ import { BatchCreateCardsDto } from './dto/batch-create-cards.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('decks')
 export class DecksController {
   constructor(private readonly decksService: DecksService) {}
 
   @Post()
-  create(@Body() createDeckDto: CreateDeckDto) {
+  create(@Body() createDeckDto: CreateDeckDto, @CurrentUser() user: User) {
+    createDeckDto.userId = user.id;
     return this.decksService.create(createDeckDto);
   }
 
   @Get()
-  findAll() {
-    return this.decksService.findAll();
+  findAll(@CurrentUser() user: User) {
+    return this.decksService.findAll(user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.decksService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.decksService.findOne(id, user.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDeckDto: UpdateDeckDto) {
-    return this.decksService.update(id, updateDeckDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateDeckDto: UpdateDeckDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.decksService.update(id, user.id, updateDeckDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.decksService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.decksService.remove(id, user.id);
   }
 
   // Nested Cards endpoints under /decks/:deckId/cards
@@ -52,18 +58,23 @@ export class DecksController {
   createCard(
     @Param('deckId') deckId: string,
     @Body() createCardDto: CreateCardDto,
+    @CurrentUser() user: User,
   ) {
-    return this.decksService.createCard(deckId, createCardDto);
+    return this.decksService.createCard(user.id, deckId, createCardDto);
   }
 
   @Get(':deckId/cards')
-  findCards(@Param('deckId') deckId: string) {
-    return this.decksService.findCardsByDeck(deckId);
+  findCards(@Param('deckId') deckId: string, @CurrentUser() user: User) {
+    return this.decksService.findCardsByDeck(user.id, deckId);
   }
 
   @Get(':deckId/cards/:cardId')
-  findCard(@Param('deckId') deckId: string, @Param('cardId') cardId: string) {
-    return this.decksService.findCard(deckId, cardId);
+  findCard(
+    @Param('deckId') deckId: string,
+    @Param('cardId') cardId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.decksService.findCard(user.id, deckId, cardId);
   }
 
   @Patch(':deckId/cards/:cardId')
@@ -71,17 +82,21 @@ export class DecksController {
     @Param('deckId') deckId: string,
     @Param('cardId') cardId: string,
     @Body() updateCardDto: UpdateCardDto,
+    @CurrentUser() user: User,
   ) {
-    return this.decksService.updateCard(deckId, cardId, updateCardDto);
+    return this.decksService.updateCard(user.id, deckId, cardId, updateCardDto);
   }
 
   @Delete(':deckId/cards/:cardId')
-  removeCard(@Param('deckId') deckId: string, @Param('cardId') cardId: string) {
-    return this.decksService.removeCard(deckId, cardId);
+  removeCard(
+    @Param('deckId') deckId: string,
+    @Param('cardId') cardId: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.decksService.removeCard(user.id, deckId, cardId);
   }
 
   @Post(':deckId/cards/batch')
-  @UseGuards(AuthGuard('jwt'))
   createCardsBatch(
     @Param('deckId') deckId: string,
     @Body() batchCreateCardsDto: BatchCreateCardsDto,

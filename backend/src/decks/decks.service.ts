@@ -36,9 +36,10 @@ export class DecksService {
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     const now = new Date();
     const decks = await this.prisma.deck.findMany({
+      where: { userId },
       include: {
         _count: {
           select: { cards: true },
@@ -62,7 +63,7 @@ export class DecksService {
     }));
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId: string) {
     const deck = await this.prisma.deck.findUnique({
       where: { id },
       include: {
@@ -72,25 +73,30 @@ export class DecksService {
     if (!deck) {
       throw new NotFoundException(`Deck with ID ${id} not found`);
     }
+    if (deck.userId !== userId) {
+      throw new ForbiddenException(
+        `Deck with ID ${id} is not owned by user ${userId}`,
+      );
+    }
     return deck;
   }
 
-  async update(id: string, updateDeckDto: UpdateDeckDto) {
-    await this.findOne(id);
+  async update(id: string, userId: string, updateDeckDto: UpdateDeckDto) {
+    await this.findOne(id, userId);
 
     return this.prisma.deck.update({
       where: { id },
       data: {
         title: updateDeckDto.title,
         description: updateDeckDto.description,
-        userId: updateDeckDto.userId,
+        userId: userId,
         initialEasinessFactor: updateDeckDto.initialEasinessFactor,
       },
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
 
     return this.prisma.deck.delete({
       where: { id },
@@ -98,8 +104,8 @@ export class DecksService {
   }
 
   // Cards Nested Actions
-  async createCard(deckId: string, createCardDto: CreateCardDto) {
-    const deck = await this.findOne(deckId);
+  async createCard(userId: string, deckId: string, createCardDto: CreateCardDto) {
+    const deck = await this.findOne(deckId, userId);
 
     return this.prisma.card.create({
       data: {
@@ -114,16 +120,16 @@ export class DecksService {
     });
   }
 
-  async findCardsByDeck(deckId: string) {
-    await this.findOne(deckId);
+  async findCardsByDeck(userId: string, deckId: string) {
+    await this.findOne(deckId, userId);
 
     return this.prisma.card.findMany({
       where: { deckId },
     });
   }
 
-  async findCard(deckId: string, cardId: string) {
-    await this.findOne(deckId);
+  async findCard(userId: string, deckId: string, cardId: string) {
+    await this.findOne(deckId, userId);
 
     const card = await this.prisma.card.findFirst({
       where: { id: cardId, deckId },
@@ -137,11 +143,12 @@ export class DecksService {
   }
 
   async updateCard(
+    userId: string,
     deckId: string,
     cardId: string,
     updateCardDto: UpdateCardDto,
   ) {
-    await this.findCard(deckId, cardId);
+    await this.findCard(userId, deckId, cardId);
 
     return this.prisma.card.update({
       where: { id: cardId },
@@ -158,8 +165,8 @@ export class DecksService {
     });
   }
 
-  async removeCard(deckId: string, cardId: string) {
-    await this.findCard(deckId, cardId);
+  async removeCard(userId: string, deckId: string, cardId: string) {
+    await this.findCard(userId, deckId, cardId);
 
     return this.prisma.card.delete({
       where: { id: cardId },

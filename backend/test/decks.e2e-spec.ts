@@ -3,11 +3,13 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { AuthService } from '../src/auth/auth.service';
 
 describe('Decks & Cards (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let userId: string;
+  let jwtToken: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -31,6 +33,11 @@ describe('Decks & Cards (e2e)', () => {
       },
     });
     userId = user.id;
+
+    // Login user to get JWT token
+    const authService = app.get(AuthService);
+    const { access_token } = await authService.login(user);
+    jwtToken = access_token;
   });
 
   afterAll(async () => {
@@ -51,6 +58,7 @@ describe('Decks & Cards (e2e)', () => {
     it('POST /decks - should validate invalid DTO (missing title)', async () => {
       await request(app.getHttpServer())
         .post('/decks')
+        .set('Authorization', `Bearer ${jwtToken}`)
         .send({
           description: 'No title',
           userId,
@@ -61,6 +69,7 @@ describe('Decks & Cards (e2e)', () => {
     it('POST /decks - should create a deck', async () => {
       const response = await request(app.getHttpServer())
         .post('/decks')
+        .set('Authorization', `Bearer ${jwtToken}`)
         .send({
           title: 'My E2E Deck',
           description: 'Created during test',
@@ -76,6 +85,7 @@ describe('Decks & Cards (e2e)', () => {
     it('GET /decks - should list decks', async () => {
       const response = await request(app.getHttpServer())
         .get('/decks')
+        .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
@@ -85,6 +95,7 @@ describe('Decks & Cards (e2e)', () => {
     it('GET /decks/:id - should get deck detail', async () => {
       const response = await request(app.getHttpServer())
         .get(`/decks/${deckId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
         .expect(200);
 
       expect(response.body.id).toBe(deckId);
@@ -94,6 +105,7 @@ describe('Decks & Cards (e2e)', () => {
     it('PATCH /decks/:id - should update deck details', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/decks/${deckId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
         .send({
           title: 'My Updated E2E Deck',
         })
@@ -108,6 +120,7 @@ describe('Decks & Cards (e2e)', () => {
       it('POST /decks/:deckId/cards - should create a card', async () => {
         const response = await request(app.getHttpServer())
           .post(`/decks/${deckId}/cards`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .send({
             frontText: 'Front Card',
             backText: 'Back Card',
@@ -122,6 +135,7 @@ describe('Decks & Cards (e2e)', () => {
       it('GET /decks/:deckId/cards - should list cards under deck', async () => {
         const response = await request(app.getHttpServer())
           .get(`/decks/${deckId}/cards`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .expect(200);
 
         expect(Array.isArray(response.body)).toBe(true);
@@ -131,6 +145,7 @@ describe('Decks & Cards (e2e)', () => {
       it('GET /decks/:deckId/cards/:cardId - should get card details', async () => {
         const response = await request(app.getHttpServer())
           .get(`/decks/${deckId}/cards/${cardId}`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .expect(200);
 
         expect(response.body.id).toBe(cardId);
@@ -139,6 +154,7 @@ describe('Decks & Cards (e2e)', () => {
       it('PATCH /decks/:deckId/cards/:cardId - should update card details', async () => {
         const response = await request(app.getHttpServer())
           .patch(`/decks/${deckId}/cards/${cardId}`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .send({
             frontText: 'Front Card Updated',
           })
@@ -150,20 +166,28 @@ describe('Decks & Cards (e2e)', () => {
       it('DELETE /decks/:deckId/cards/:cardId - should delete card', async () => {
         await request(app.getHttpServer())
           .delete(`/decks/${deckId}/cards/${cardId}`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .expect(200);
 
         // Verify deleted
         await request(app.getHttpServer())
           .get(`/decks/${deckId}/cards/${cardId}`)
+          .set('Authorization', `Bearer ${jwtToken}`)
           .expect(404);
       });
     });
 
     it('DELETE /decks/:id - should delete deck', async () => {
-      await request(app.getHttpServer()).delete(`/decks/${deckId}`).expect(200);
+      await request(app.getHttpServer())
+        .delete(`/decks/${deckId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
 
       // Verify deleted
-      await request(app.getHttpServer()).get(`/decks/${deckId}`).expect(404);
+      await request(app.getHttpServer())
+        .get(`/decks/${deckId}`)
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(404);
     });
   });
 });
