@@ -37,3 +37,11 @@ desktop.ini
 *.njsproj
 *.sln
 *.swp
+
+# Gemini Tutor Mode
+gemini-tutor-mode (2).md
+GEMINI.md
+
+#GSD
+.agents/
+.planning/
